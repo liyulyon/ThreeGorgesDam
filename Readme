@@ -2,4 +2,4 @@ This is a instruction file to tell what is in this Resposity.
 
 1. A python file to find the conflict resolution points based on set decision maker's preferences (0.2, 0.8), (1, 1) and (0.8, 0.2).
 2. A R file to draw the Pearson type III curve specificly for hydrologic frequency analysis in China. This R file is just for drawing 
-the transformed x axis scale and labels, so the data should be prepared firstly.
+the transformed x axis scale and labels, so the data should be prepared firstly (two example txt data files are attached).
