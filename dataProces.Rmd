@@ -1,0 +1,245 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+entireWY <- read.delim("entireWY.txt")
+library(ggplot2)
+library(scales) ## required for probability axis
+
+## Setup breaks for plot
+xbreaks = c(0.05, 0.5, 1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99.5, 99.9, 99.99)
+yb = qnorm(xbreaks/100,0,1)
+yb = yb - qnorm(0.0001,0,1)
+
+xb2 = c(0.05, 0.5, 1, 2, 5, 10, 20, 50, 99.99)
+yb2 = qnorm(xb2/100,0,1)
+yb2 = yb2 - qnorm(0.0001,0,1)
+
+entireWY$PROB2 = qnorm(entireWY$PROB, 0, 1)
+entireWY$PROB3 = entireWY$PROB2 - qnorm(0.0001,0,1)
+
+transf <- function(data){
+  x = qnorm(data,0,1)
+  x = x-qnorm(0.0001,0,1)
+  return(x)
+}
+a = transf(entireWY$FittingFre)
+b = transf(entireWY$Freq)
+retp = 1/xb2*100
+plt = ggplot(entireWY, aes(x=PROB3, y=FLOW, alpha = "Historical runoff")) + geom_point() + theme_bw()
+plt = plt + scale_y_continuous( name=expression(paste("Volume (billion ",m^{3},")")))
+plt = plt + scale_x_continuous(breaks=yb, labels=xbreaks,
+                               name="Hydrologic Frequency (%)",
+                               sec.axis = dup_axis(
+                                 name = "Return period (year)",
+                                 breaks = yb2,
+                                 labels = format(round(retp), nsmall = 0)
+                               ))
+plt2 = plt + geom_point(size = 2) +
+  geom_line(aes(x = a, y = entireWY$FittingV, alpha = "Fitted line"), color = "red") 
+
+plt2 = plt2 + scale_alpha_manual(name = NULL,
+                        values = c(1, 1),
+                        breaks = c("Historical runoff", "Fitted line"),
+                        guide = guide_legend(override.aes = list(linetype = c(0, 1),
+                                                                  shape = c(16, NA)
+                        ) ) )+ theme(legend.title = element_blank(),legend.position = "bottom")
+plt2
+```
+
+
+```{r}
+dryseason <- read.delim("DryseasonFreq.txt")
+library(ggplot2)
+library(scales) ## required for probability axis
+
+## Setup breaks for plot
+xbreaks = c(0.05, 0.5, 1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99.5, 99.9, 99.99)
+yb = qnorm(xbreaks/100,0,1)
+yb = yb - qnorm(0.0001,0,1)
+
+xb2 = c(0.05, 0.5, 1, 2, 5, 10, 20, 50, 99.99)
+yb2 = qnorm(xb2/100,0,1)
+yb2 = yb2 - qnorm(0.0001,0,1)
+
+dryseason$PROB2 = qnorm(dryseason$PROB, 0, 1)
+dryseason$PROB3 = dryseason$PROB2 - qnorm(0.0001,0,1)
+
+transf <- function(data){
+  x = qnorm(data,0,1)
+  x = x-qnorm(0.0001,0,1)
+  return(x)
+}
+a = transf(dryseason$FittingFre)
+#b = transf(dryseason$Freq)
+retp = 1/xb2*100
+plt = ggplot(dryseason, aes(x=PROB3, y=FLOW, alpha = "Historical runoff")) + geom_point() + theme_bw()
+plt = plt + scale_y_continuous( name=expression(paste("Volume (billion ",m^{3},")")))
+plt = plt + scale_x_continuous(breaks=yb, labels=xbreaks,
+                               name="Hydrologic Frequency (%)",
+                               sec.axis = dup_axis(
+                                 name = "Return period (year)",
+                                 breaks = yb2,
+                                 labels = format(round(retp), nsmall = 0)
+                               ))
+plt3 = plt + geom_point(size = 2) +
+  geom_line(aes(x = a, y = dryseason$FittingV, alpha = "Fitted line"), color = "red") + theme(legend.title = element_blank(),legend.position = "bottom")
+
+plt3 = plt3 +
+     scale_alpha_manual(name = NULL,
+                        values = c(1, 1),
+                        breaks = c("Historical runoff", "Fitted line"),
+                        guide = guide_legend(override.aes = list(linetype = c(0, 1),
+                                                                  shape = c(16, NA)
+                        ) ) )
+plt3
+library(cowplot)
+plt4 = plot_grid(plt2, plt3, ncol = 1, align = "v")
+```
+
+
+```{r}
+library(grid)
+library(gridExtra)
+plots <- list(plt2, plt3)
+g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
+legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+lheight <- sum(legend$height)
+tmp <- arrangeGrob(plt2 + theme(legend.position = "none"), plt3 + theme(legend.position = "none"), layout_matrix = matrix(c(1, 2), nrow = 1))
+grid.arrange(tmp, legend, ncol = 1, heights = unit.c(unit(1, "npc") - lheight, lheight))
+library(ggpubr)
+plt4 = ggarrange(plt2, plt3, ncol=1, nrow=2, common.legend = TRUE, legend="bottom")
+```
+```{r}
+
+entireWY <- read.delim("entireWY.txt")
+library(ggplot2)
+library(scales) ## required for probability axis
+
+## Setup breaks for plot
+xbreaks = c(0.05, 0.5, 1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99.5, 99.9, 99.99)
+yb = qnorm(xbreaks/100,0,1)
+yb = yb - qnorm(0.0001,0,1)
+
+xb2 = c(0.05, 0.5, 1, 2, 5, 10, 20, 50, 99.99)
+yb2 = qnorm(xb2/100,0,1)
+yb2 = yb2 - qnorm(0.0001,0,1)
+
+entireWY$PROB2 = qnorm(entireWY$PROB, 0, 1)
+entireWY$PROB3 = entireWY$PROB2 - qnorm(0.0001,0,1)
+
+transf <- function(data){
+  x = qnorm(data,0,1)
+  x = x-qnorm(0.0001,0,1)
+  return(x)
+}
+a = transf(entireWY$FittingFre)
+b = transf(entireWY$Freq)
+retp = 1/xb2*100
+inflowrate = entireWY$FLOW/365*1000000000/24/3600
+
+Finflowrate = entireWY$FittingV/365*1000000000/24/3600
+
+
+plt = ggplot(entireWY, aes(x=PROB3, y=inflowrate, alpha = "Historical runoff")) + geom_point() + theme_bw()
+plt = plt + scale_y_continuous( name=expression(paste("Average inflow rate (",m^{3},"/s)")))
+plt = plt + scale_x_continuous(breaks=yb, labels=xbreaks,
+                               name="Exceedance probability (%)")
+
+
+
+
+plt2 = plt + geom_point(size = 2) +
+  geom_line(aes(x = a, y = Finflowrate, alpha = "Fitted line"), color = "red") 
+
+plt2 = plt2 + scale_alpha_manual(name = NULL,
+                        values = c(1, 1),
+                        breaks = c("Historical runoff", "Fitted line"),
+                        guide = guide_legend(override.aes = list(linetype = c(0, 1),
+                                                                  shape = c(16, NA)
+                        ) ) )+ theme(legend.title = element_blank(),legend.position = "bottom")
+plt2
+```
+
+
+```{r}
+dryseason <- read.delim("DryseasonFreq.txt")
+library(ggplot2)
+library(scales) ## required for probability axis
+
+## Setup breaks for plot
+xbreaks = c(0.05, 0.5, 1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99.5, 99.9, 99.99)
+yb = qnorm(xbreaks/100,0,1)
+yb = yb - qnorm(0.0001,0,1)
+
+xb2 = c(0.05, 0.5, 1, 2, 5, 10, 20, 50, 99.99)
+yb2 = qnorm(xb2/100,0,1)
+yb2 = yb2 - qnorm(0.0001,0,1)
+
+dryseason$PROB2 = qnorm(dryseason$PROB, 0, 1)
+dryseason$PROB3 = dryseason$PROB2 - qnorm(0.0001,0,1)
+
+transf <- function(data){
+  x = qnorm(data,0,1)
+  x = x-qnorm(0.0001,0,1)
+  return(x)
+}
+inflowrate2 = dryseason$FLOW/181*1000000000/24/3600
+
+Finflowrate2 = dryseason$FittingV/181*1000000000/24/3600
+a = transf(dryseason$FittingFre)
+#b = transf(dryseason$Freq)
+retp = 1/xb2*100
+plt = ggplot(dryseason, aes(x=PROB3, y=inflowrate2, alpha = "Historical runoff")) + geom_point() + theme_bw()
+plt = plt + scale_y_continuous( name=expression(paste("Average inflow rate (",m^{3},"/s)")))
+plt = plt + scale_x_continuous(breaks=yb, labels=xbreaks,
+                               name="Exceedance probability (%)",
+                               )
+plt3 = plt + geom_point(size = 2) +
+  geom_line(aes(x = a, y = Finflowrate2, alpha = "Fitted line"), color = "red") + theme(legend.title = element_blank(),legend.position = "bottom")
+
+plt3 = plt3 +
+     scale_alpha_manual(name = NULL,
+                        values = c(1, 1),
+                        breaks = c("Historical runoff", "Fitted line"),
+                        guide = guide_legend(override.aes = list(linetype = c(0, 1),
+                                                                  shape = c(16, NA)
+                        ) ) )
+plt3
+library(cowplot)
+plt4 = plot_grid(plt2, plt3, ncol = 1, align = "v")
+```
+
+
+```{r}
+library(grid)
+library(gridExtra)
+plots <- list(plt2, plt3)
+g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
+legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+lheight <- sum(legend$height)
+tmp <- arrangeGrob(plt2 + theme(legend.position = "none"), plt3 + theme(legend.position = "none"), layout_matrix = matrix(c(1, 2), nrow = 1))
+grid.arrange(tmp, legend, ncol = 1, heights = unit.c(unit(1, "npc") - lheight, lheight))
+library(ggpubr)
+plt4 = ggarrange(plt2, plt3, ncol=1, nrow=2, common.legend = TRUE, legend="bottom")
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
